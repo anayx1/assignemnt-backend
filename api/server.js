@@ -42,7 +42,7 @@
 
 const express = require('express');
 const cors = require('cors');
-const connectDB = require('./config/database');
+const connectDB = require('../config/database');
 require('dotenv').config();
 
 const app = express();
@@ -53,13 +53,13 @@ app.use(express.urlencoded({ extended: true }));
 
 connectDB();
 
-app.use('/api/auth', require('./routes/auth'));
-app.use('/api/docs', require('./routes/upload'));
-app.use('/api/docs', require('./routes/sign'));
-app.use('/api/sign', require('./routes/publicSign'));
-app.use('/api/docs', require('./routes/download'));
-app.use('/api/docs', require('./routes/link'));
-app.use('/api/verify', require('./routes/verify'));
+app.use('/api/auth', require('../routes/auth'));
+app.use('/api/docs', require('../routes/upload'));
+app.use('/api/docs', require('../routes/sign'));
+app.use('/api/sign', require('../routes/publicSign'));
+app.use('/api/docs', require('../routes/download'));
+app.use('/api/docs', require('../routes/link'));
+app.use('/api/verify', require('../routes/verify'));
 
 // Health check
 app.get('/', (req, res) => {
