@@ -3,7 +3,6 @@ const router = express.Router();
 const mongoose = require('mongoose');
 const Document = require('../models/Document');
 
-// Get document by sign link (existing route)
 router.get('/:signLink', async (req, res) => {
   try {
     const document = await Document.findOne({ 
@@ -19,6 +18,7 @@ router.get('/:signLink', async (req, res) => {
         id: document._id,
         filename: document.filename,
         signatureMarkers: document.signatureMarkers,
+        signatures: document.signatures,
         status: document.status
       }
     });
@@ -27,7 +27,6 @@ router.get('/:signLink', async (req, res) => {
   }
 });
 
-// ADD THIS NEW ROUTE - Download PDF for public signing (no auth required)
 router.get('/:signLink/download', async (req, res) => {
   try {
     const document = await Document.findOne({ 
@@ -55,6 +54,58 @@ router.get('/:signLink/download', async (req, res) => {
     });
   } catch (error) {
     console.error('Error downloading document:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+router.post('/:signLink/sign', async (req, res) => {
+  try {
+    const { signerEmail, signatureData, x, y, page } = req.body;
+
+    console.log('Sign request received:', { signerEmail, x, y, page });
+
+    if (!signerEmail || !signatureData) {
+      return res.status(400).json({ error: 'Signer email and signature data are required' });
+    }
+
+    const document = await Document.findOne({ 
+      signLink: req.params.signLink 
+    });
+
+    if (!document) {
+      return res.status(404).json({ error: 'Document not found' });
+    }
+
+    const signature = {
+      signerEmail,
+      signatureData,
+      x: x || 10,
+      y: y || 10,
+      page: page || 1,
+      timestamp: new Date(),
+    };
+
+    document.signatures.push(signature);
+
+    const requiredSignatures = document.signatureMarkers?.length || 1;
+    if (document.signatures.length >= requiredSignatures) {
+      document.status = 'signed';
+    }
+
+    await document.save();
+
+    console.log('Signature saved successfully');
+
+    res.json({ 
+      message: 'Document signed successfully',
+      document: {
+        id: document._id,
+        status: document.status,
+        signatures: document.signatures
+      }
+    });
+  } catch (error) {
+    console.error('Error signing document:', error);
     res.status(500).json({ error: error.message });
   }
 });
